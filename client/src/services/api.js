@@ -138,6 +138,7 @@ export const booksAPI = {
   delete: (id) => api.delete(`/books/${id}`),
   getSellerBooks: (sellerId) => api.get(`/books/seller/${sellerId}`),
   search: (query) => api.get('/books/search/query', { params: { q: query } }),
+  addReview: (id, data) => api.post(`/books/${id}/reviews`, data),
 };
 
 // User APIs

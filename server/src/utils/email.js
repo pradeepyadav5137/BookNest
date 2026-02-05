@@ -24,7 +24,8 @@ export const sendPdfEmail = async (purchase) => {
   try {
     const transporter = createTransporter();
 
-    const mailOptions = {
+    // Send to buyer
+    const buyerMailOptions = {
       from: `"BookNest" <${process.env.EMAIL_USER}>`,
       to: purchase.buyer.email,
       subject: `Your Book Purchase: ${purchase.book.title}`,
@@ -64,8 +65,45 @@ export const sendPdfEmail = async (purchase) => {
       ] : [],
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('PDF email sent:', info.messageId);
+    const info = await transporter.sendMail(buyerMailOptions);
+    console.log('PDF email sent to buyer:', info.messageId);
+
+    // Send to seller
+    const sellerMailOptions = {
+      from: `"BookNest" <${process.env.EMAIL_USER}>`,
+      to: purchase.seller.email,
+      subject: `Your Book has been sold: ${purchase.book.title}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Great news! Your book has a new owner.</h2>
+          <p>Hi ${purchase.seller.name},</p>
+          <p>Your book <strong>${purchase.book.title}</strong> has been purchased by ${purchase.buyer.name}.</p>
+
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Sale Details:</h3>
+            <p><strong>Book:</strong> ${purchase.book.title}</p>
+            <p><strong>Amount:</strong> ₹${purchase.amount}</p>
+            <p><strong>Your Share (90%):</strong> ₹${(purchase.amount * 0.9).toFixed(2)}</p>
+            <p><strong>Sale Date:</strong> ${new Date(purchase.createdAt).toLocaleDateString()}</p>
+          </div>
+
+          <p>The funds have been added to your wallet. You can request a withdrawal at any time from your profile.</p>
+
+          <p style="margin-top: 30px;">
+            Best regards,<br>
+            <strong>BookNest Team</strong>
+          </p>
+        </div>
+      `
+    };
+
+    try {
+      await transporter.sendMail(sellerMailOptions);
+      console.log('Notification email sent to seller');
+    } catch (sellerError) {
+      console.error('Error sending email to seller:', sellerError);
+      // Don't fail the whole process if seller email fails
+    }
     
     // Update purchase record
     purchase.pdfDelivered = true;

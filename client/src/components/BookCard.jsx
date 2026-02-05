@@ -27,6 +27,8 @@ export default function BookCard({ book }) {
     navigate(`/books/${book._id}`);
   };
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
   return (
     <div className="book-card">
       <Link to={`/books/${book._id}`} className="book-card-link">
@@ -38,7 +40,10 @@ export default function BookCard({ book }) {
 
           {/* Book cover image or placeholder */}
           {book.coverImage ? (
-            <img src={book.coverImage} alt={book.title} />
+            <img
+              src={book.coverImage.startsWith('http') ? book.coverImage : `${API_BASE_URL}${book.coverImage}`}
+              alt={book.title}
+            />
           ) : (
             <div className="cover-placeholder">📚</div>
           )}
@@ -56,7 +61,7 @@ export default function BookCard({ book }) {
             <div className="book-price-section">
               <span className="book-price">₹{book.price}</span>
               <span className="book-rating">
-                ⭐ 4.0
+                ⭐ {book.rating ? book.rating.toFixed(1) : 'No rating'}
               </span>
             </div>
             
