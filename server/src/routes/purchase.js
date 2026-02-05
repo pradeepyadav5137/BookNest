@@ -138,13 +138,23 @@ router.post("/verify-payment", verifyToken, async (req, res) => {
     await buyer.save();
   }
 
-  // Credit seller wallet
+  // Credit seller wallet (90%) and Admin (10%)
   const seller = await User.findById(purchase.seller._id);
   if (!seller.booksSold.includes(purchase.book._id)) {
     seller.booksSold.push(purchase.book._id);
   }
-  seller.walletBalance += purchase.amount;
+  const sellerShare = purchase.amount * 0.9;
+  const adminShare = purchase.amount * 0.1;
+
+  seller.walletBalance += sellerShare;
   await seller.save();
+
+  // Credit first admin found
+  const admin = await User.findOne({ role: 'admin' });
+  if (admin) {
+    admin.walletBalance += adminShare;
+    await admin.save();
+  }
 
   // Send PDF
   await sendPdfEmail(purchase);
@@ -193,11 +203,21 @@ router.post("/buy-with-wallet", verifyToken, async (req, res) => {
   await user.save();
 
   const seller = await User.findById(book.seller._id);
-  seller.walletBalance += book.price;
+  const sellerShare = book.price * 0.9;
+  const adminShare = book.price * 0.1;
+
+  seller.walletBalance += sellerShare;
   if (!seller.booksSold.includes(bookId)) {
     seller.booksSold.push(bookId);
   }
   await seller.save();
+
+  // Credit first admin found
+  const admin = await User.findOne({ role: 'admin' });
+  if (admin) {
+    admin.walletBalance += adminShare;
+    await admin.save();
+  }
 
   await sendPdfEmail(purchase);
 

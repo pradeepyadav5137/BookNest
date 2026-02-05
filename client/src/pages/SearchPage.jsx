@@ -13,15 +13,15 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (query) {
-      loadResults();
-    }
+    loadResults();
   }, [query]);
 
   const loadResults = async () => {
     try {
       setLoading(true);
-      const response = await booksAPI.search(query);
+      const response = query
+        ? await booksAPI.search(query)
+        : await booksAPI.getAll();
       setBooks(response.data);
     } catch (error) {
       console.error('Search failed:', error);
@@ -34,7 +34,7 @@ export default function SearchPage() {
     <div className="page-container">
       <section className="books-section container">
         <h2 className="section-title">
-          {query ? `Search Results for "${query}"` : 'Search Books'}
+          {query ? `Search Results for "${query}"` : 'All Books'}
         </h2>
 
         {loading ? (

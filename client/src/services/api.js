@@ -129,8 +129,12 @@ export const booksAPI = {
   getAll: (category, search) =>
     api.get('/books', { params: { category, search } }),
   getById: (id) => api.get(`/books/${id}`),
-  create: (data) => api.post('/books', data),
-  update: (id, data) => api.put(`/books/${id}`, data),
+  create: (data) => api.post('/books', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id, data) => api.put(`/books/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   delete: (id) => api.delete(`/books/${id}`),
   getSellerBooks: (sellerId) => api.get(`/books/seller/${sellerId}`),
   search: (query) => api.get('/books/search/query', { params: { q: query } }),
@@ -164,6 +168,14 @@ export const walletAPI = {
   getWithdrawal: (withdrawalId) => api.get(`/wallet/requests/${withdrawalId}`),
   cancelWithdrawal: (withdrawalId) =>
     api.post(`/wallet/requests/${withdrawalId}/cancel`),
+};
+
+// Admin APIs
+export const adminAPI = {
+  getBooks: () => api.get('/admin/books'),
+  verifyBook: (id, status) => api.patch(`/admin/books/${id}/verify`, { status }),
+  takedownBook: (id, isAvailable) => api.patch(`/admin/books/${id}/takedown`, { isAvailable }),
+  getStats: () => api.get('/admin/stats'),
 };
 
 export default api;
