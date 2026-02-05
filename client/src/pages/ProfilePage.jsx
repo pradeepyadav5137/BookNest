@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { userAPI, walletAPI } from '../services/api';
 import BookCard from '../components/BookCard';
@@ -75,6 +76,14 @@ export default function ProfilePage() {
                 ₹{user?.walletBalance?.toFixed(2) || '0.00'}
               </div>
             </div>
+
+            {user?.role === 'admin' && (
+              <div style={{ marginTop: '20px' }}>
+                <Link to="/admin" className="btn btn-primary" style={{ width: '100%' }}>
+                  🛡️ Admin Dashboard
+                </Link>
+              </div>
+            )}
           </div>
 
           <div style={{ flex: 1 }}>

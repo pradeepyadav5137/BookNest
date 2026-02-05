@@ -4,6 +4,7 @@ import './pages.css';
 
 const AdminDashboard = () => {
   const [books, setBooks] = useState([]);
+  const [claims, setClaims] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,12 +16,14 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [booksRes, statsRes] = await Promise.all([
+      const [booksRes, statsRes, claimsRes] = await Promise.all([
         adminAPI.getBooks(),
         adminAPI.getStats(),
+        adminAPI.getCopyrightClaims(),
       ]);
       setBooks(booksRes.data);
       setStats(statsRes.data);
+      setClaims(claimsRes.data);
     } catch (err) {
       setError('Failed to fetch admin data');
       console.error(err);
@@ -34,6 +37,16 @@ const AdminDashboard = () => {
       await adminAPI.verifyBook(id, status);
       fetchData(); // Refresh
       alert(`Book ${status} successfully`);
+    } catch (err) {
+      alert('Action failed');
+    }
+  };
+
+  const handleUpdateClaim = async (id, status) => {
+    try {
+      await adminAPI.updateCopyrightClaim(id, status);
+      fetchData();
+      alert(`Claim ${status} successfully`);
     } catch (err) {
       alert('Action failed');
     }
@@ -140,6 +153,62 @@ const AdminDashboard = () => {
                           style={{ padding: '5px 10px', fontSize: '12px' }}
                         >
                           View PDF
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section style={{ marginTop: '60px' }}>
+          <h2 className="section-title">Copyright Claims</h2>
+          <div className="table-responsive" style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #333', textAlign: 'left' }}>
+                  <th style={{ padding: '12px' }}>Book</th>
+                  <th style={{ padding: '12px' }}>Claimer</th>
+                  <th style={{ padding: '12px' }}>Explanation</th>
+                  <th style={{ padding: '12px' }}>Status</th>
+                  <th style={{ padding: '12px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {claims.map((claim) => (
+                  <tr key={claim._id} style={{ borderBottom: '1px solid #222' }}>
+                    <td style={{ padding: '12px' }}>{claim.book?.title}</td>
+                    <td style={{ padding: '12px' }}>{claim.claimer?.name} ({claim.claimer?.email})</td>
+                    <td style={{ padding: '12px' }}>{claim.explanation}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span className={`badge ${claim.status}`} style={{
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        backgroundColor: claim.status === 'approved' ? '#28a745' : claim.status === 'rejected' ? '#dc3545' : '#ffc107',
+                        color: '#000'
+                      }}>
+                        {claim.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        {claim.status === 'pending' && (
+                          <>
+                            <button onClick={() => handleUpdateClaim(claim._id, 'approved')} className="btn btn-primary" style={{ padding: '5px 10px', fontSize: '12px' }}>Approve (Take Down Book)</button>
+                            <button onClick={() => handleUpdateClaim(claim._id, 'rejected')} className="btn btn-outline" style={{ padding: '5px 10px', fontSize: '12px', borderColor: '#dc3545', color: '#dc3545' }}>Reject</button>
+                          </>
+                        )}
+                        <a
+                          href={`http://localhost:5000${claim.proofDocument}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline"
+                          style={{ padding: '5px 10px', fontSize: '12px' }}
+                        >
+                          View Proof
                         </a>
                       </div>
                     </td>

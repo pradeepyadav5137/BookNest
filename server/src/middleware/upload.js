@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
       folder = path.join(folder, 'books/');
     } else if (file.fieldname === 'coverImage') {
       folder = path.join(folder, 'covers/');
-    } else if (file.fieldname === 'copyrightProof') {
+    } else if (file.fieldname === 'copyrightProof' || file.fieldname === 'proofDocument') {
       folder = path.join(folder, 'proofs/');
     }
 
@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'pdfFile' || file.fieldname === 'copyrightProof') {
+  if (file.fieldname === 'pdfFile' || file.fieldname === 'copyrightProof' || file.fieldname === 'proofDocument') {
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {

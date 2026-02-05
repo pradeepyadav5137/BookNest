@@ -2,6 +2,7 @@ import express from 'express';
 import Book from '../models/Book.js';
 import User from '../models/User.js';
 import Purchase from '../models/Purchase.js';
+import CopyrightClaim from '../models/CopyrightClaim.js';
 import { verifyToken, isAdmin } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -88,6 +89,47 @@ router.get('/stats', async (req, res) => {
       totalRevenue: salesData[0]?.totalRevenue || 0,
       adminWalletBalance: adminUser.walletBalance
     });
+  } catch (error) {
+    throw error;
+  }
+});
+
+// Get all copyright claims
+router.get('/copyright-claims', async (req, res) => {
+  try {
+    const claims = await CopyrightClaim.find()
+      .populate('book', 'title seller')
+      .populate('claimer', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(claims);
+  } catch (error) {
+    throw error;
+  }
+});
+
+// Approve/Reject a copyright claim
+router.patch('/copyright-claims/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const claim = await CopyrightClaim.findById(req.params.id);
+    if (!claim) {
+      throw new AppError('Claim not found', 404);
+    }
+
+    claim.status = status;
+    await claim.save();
+
+    if (status === 'approved') {
+      // Take down the book
+      const book = await Book.findById(claim.book);
+      if (book) {
+        book.isAvailable = false;
+        book.verificationStatus = 'rejected'; // Mark as rejected/copyright issue
+        await book.save();
+      }
+    }
+
+    res.json(claim);
   } catch (error) {
     throw error;
   }

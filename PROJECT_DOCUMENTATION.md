@@ -24,8 +24,9 @@ BookNest is a digital library marketplace where users can discover, buy, and sel
 ### 4. Admin Panel
 - **Dashboard:** Overview of platform stats (Total Users, Books, Revenue, and Admin Commission).
 - **Verification System:** Admins manually verify copyrighted books and notes.
+- **Copyright Claims:** A new system allowing any user to claim copyright ownership with proof, which admins can then verify and act upon by taking down the infringing content.
 - **Content Management:** Admins can take down or restore any book on the platform.
-- **Secure Access:** Only users with the `admin` role can access the dashboard.
+- **Secure Access:** Only users with the `admin` role can access the dashboard, with a direct link provided in their profile page.
 
 ### 5. Automated Delivery
 - **Email Integration:** Upon successful purchase, the buyer automatically receives an email with the book PDF attached.
