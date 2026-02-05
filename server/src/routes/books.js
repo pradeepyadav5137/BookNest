@@ -1,6 +1,7 @@
 import express from 'express';
 import Book from '../models/Book.js';
 import Purchase from '../models/Purchase.js';
+import CopyrightClaim from '../models/CopyrightClaim.js';
 import { verifyToken, optionalAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { upload } from '../middleware/upload.js';
@@ -243,6 +244,38 @@ router.post('/:id/reviews', verifyToken, async (req, res) => {
       message: 'Review added successfully',
       rating: book.rating,
       reviews: book.reviews,
+    });
+  } catch (error) {
+    throw error;
+  }
+});
+
+// Submit a copyright claim
+router.post('/:id/copyright-claim', verifyToken, upload.single('proofDocument'), async (req, res) => {
+  try {
+    const { explanation } = req.body;
+    const bookId = req.params.id;
+
+    if (!explanation) {
+      throw new AppError('Please provide an explanation', 400);
+    }
+
+    if (!req.file) {
+      throw new AppError('Please upload a proof document', 400);
+    }
+
+    const proofDocument = `/uploads/proofs/${req.file.filename}`;
+
+    const claim = await CopyrightClaim.create({
+      book: bookId,
+      claimer: req.userId,
+      proofDocument,
+      explanation,
+    });
+
+    res.status(201).json({
+      message: 'Copyright claim submitted successfully. Admin will verify it.',
+      claim,
     });
   } catch (error) {
     throw error;

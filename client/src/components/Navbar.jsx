@@ -127,6 +127,16 @@ export default function Navbar() {
                     >
                       Profile
                     </Link>
+                    {user?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="dropdown-item"
+                        style={{ color: '#3b82f6', fontWeight: 'bold' }}
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        🛡️ Admin Dashboard
+                      </Link>
+                    )}
                     <Link
                       to="/sell"
                       className="dropdown-item"

@@ -139,6 +139,9 @@ export const booksAPI = {
   getSellerBooks: (sellerId) => api.get(`/books/seller/${sellerId}`),
   search: (query) => api.get('/books/search/query', { params: { q: query } }),
   addReview: (id, data) => api.post(`/books/${id}/reviews`, data),
+  submitCopyrightClaim: (id, data) => api.post(`/books/${id}/copyright-claim`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 // User APIs
@@ -177,6 +180,8 @@ export const adminAPI = {
   verifyBook: (id, status) => api.patch(`/admin/books/${id}/verify`, { status }),
   takedownBook: (id, isAvailable) => api.patch(`/admin/books/${id}/takedown`, { isAvailable }),
   getStats: () => api.get('/admin/stats'),
+  getCopyrightClaims: () => api.get('/admin/copyright-claims'),
+  updateCopyrightClaim: (id, status) => api.patch(`/admin/copyright-claims/${id}`, { status }),
 };
 
 export default api;

@@ -16,6 +16,9 @@ export default function BookDetailPage() {
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [resending, setResending] = useState(false);
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [claimData, setClaimData] = useState({ explanation: '', proofDocument: null });
+  const [submittingClaim, setSubmittingClaim] = useState(false);
   const { user, isAuthenticated, refreshUser } = useAuth();
   const navigate = useNavigate();
 
@@ -156,6 +159,30 @@ export default function BookDetailPage() {
     }
   };
 
+  const handleSubmitClaim = async (e) => {
+    e.preventDefault();
+    if (!claimData.proofDocument) {
+      alert('Please upload a proof document');
+      return;
+    }
+
+    setSubmittingClaim(true);
+    try {
+      const formData = new FormData();
+      formData.append('explanation', claimData.explanation);
+      formData.append('proofDocument', claimData.proofDocument);
+
+      await booksAPI.submitCopyrightClaim(id, formData);
+      alert('Copyright claim submitted successfully! Admin will review it.');
+      setShowClaimForm(false);
+      setClaimData({ explanation: '', proofDocument: null });
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to submit claim');
+    } finally {
+      setSubmittingClaim(false);
+    }
+  };
+
   if (loading) return <div className="container"><div className="loading">Loading...</div></div>;
   if (error && !book) return <div className="container"><div className="error-message">{error}</div></div>;
   if (!book) return <div className="container"><div className="empty-state">Book not found</div></div>;
@@ -225,7 +252,46 @@ export default function BookDetailPage() {
                   {resending ? 'Sending...' : '📧 Resend Book Email'}
                 </button>
               )}
+              {isAuthenticated && !isOwnBook && (
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setShowClaimForm(!showClaimForm)}
+                  style={{ color: '#ff4d4d', borderColor: '#ff4d4d' }}
+                >
+                  🚩 Claim Copyright
+                </button>
+              )}
             </div>
+
+            {showClaimForm && (
+              <div style={{ background: 'rgba(255, 77, 77, 0.1)', padding: '20px', borderRadius: '12px', marginBottom: '30px', border: '1px solid #ff4d4d' }}>
+                <h3>Claim Copyright Ownership</h3>
+                <p style={{ fontSize: '14px', marginBottom: '20px' }}>If you believe this book infringes on your copyright, please provide proof below.</p>
+                <form onSubmit={handleSubmitClaim}>
+                  <div className="form-group">
+                    <label>Explanation</label>
+                    <textarea
+                      value={claimData.explanation}
+                      onChange={(e) => setClaimData({...claimData, explanation: e.target.value})}
+                      placeholder="Explain why you are claiming copyright for this work..."
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Proof Document (PDF)</label>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setClaimData({...claimData, proofDocument: e.target.files[0]})}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ background: '#ff4d4d' }} disabled={submittingClaim}>
+                    {submittingClaim ? 'Submitting...' : 'Submit Claim'}
+                  </button>
+                </form>
+              </div>
+            )}
 
             <div style={{ marginBottom: '20px' }}>
               <span style={{ fontSize: '20px' }}>
