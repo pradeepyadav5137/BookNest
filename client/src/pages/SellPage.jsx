@@ -14,14 +14,28 @@ export default function SellPage() {
     category: 'fiction',
     isbn: '',
     pages: '',
+    isCopyrighted: false,
+  });
+  const [files, setFiles] = useState({
+    pdfFile: null,
+    coverImage: null,
+    copyrightProof: null,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setFiles((prev) => ({ ...prev, [name]: files[0] }));
   };
 
   const handleSubmit = async (e) => {
@@ -34,11 +48,19 @@ export default function SellPage() {
         throw new Error('Please fill all required fields');
       }
 
-      await booksAPI.create({
-        ...formData,
-        price: parseFloat(formData.price),
-        pages: formData.pages ? parseInt(formData.pages) : undefined,
+      if (!files.pdfFile) {
+        throw new Error('Please upload the book PDF file');
+      }
+
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => {
+        data.append(key, formData[key]);
       });
+      if (files.pdfFile) data.append('pdfFile', files.pdfFile);
+      if (files.coverImage) data.append('coverImage', files.coverImage);
+      if (files.copyrightProof) data.append('copyrightProof', files.copyrightProof);
+
+      await booksAPI.create(data);
 
       alert('Book listed successfully!');
       navigate('/profile');
@@ -161,11 +183,57 @@ export default function SellPage() {
               />
             </div>
 
-            <div style={{ background: '#1a3a3a', padding: '15px', borderRadius: '6px', marginBottom: '20px', borderLeft: '4px solid #00d4ff' }}>
-              <p style={{ margin: 0, fontSize: '14px', color: '#ccc' }}>
-                📝 <strong>Note:</strong> You'll need to upload the PDF file separately. Buyers will receive the PDF via email after payment.
-              </p>
+            <div className="form-group">
+              <label htmlFor="pdfFile">Book PDF *</label>
+              <input
+                id="pdfFile"
+                type="file"
+                name="pdfFile"
+                accept=".pdf"
+                onChange={handleFileChange}
+                required
+              />
             </div>
+
+            <div className="form-group">
+              <label htmlFor="coverImage">Cover Image</label>
+              <input
+                id="coverImage"
+                type="file"
+                name="coverImage"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <input
+                id="isCopyrighted"
+                type="checkbox"
+                name="isCopyrighted"
+                checked={formData.isCopyrighted}
+                onChange={handleChange}
+                style={{ width: 'auto' }}
+              />
+              <label htmlFor="isCopyrighted" style={{ marginBottom: 0 }}>This is a copyrighted book/notes</label>
+            </div>
+
+            {formData.isCopyrighted && (
+              <div className="form-group">
+                <label htmlFor="copyrightProof">Copyright Proof (PDF) *</label>
+                <input
+                  id="copyrightProof"
+                  type="file"
+                  name="copyrightProof"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  required={formData.isCopyrighted}
+                />
+                <p style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
+                  Please upload a document proving you own the rights to this work.
+                </p>
+              </div>
+            )}
 
             <button
               type="submit"

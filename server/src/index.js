@@ -9,6 +9,8 @@ console.log("ENV LOADED:", process.env.RAZORPAY_KEY_ID);
 
 
 
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDB } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -17,6 +19,7 @@ import booksRoutes from './routes/books.js';
 import userRoutes from './routes/user.js';
 import purchaseRoutes from './routes/purchase.js';
 import walletRoutes from './routes/wallet.js';
+import adminRoutes from './routes/admin.js';
 
 
 const app = express();
@@ -35,6 +38,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
+// Static files for uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Connect to MongoDB
 connectDB();
 
@@ -52,6 +60,7 @@ app.use('/api/books', booksRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/purchase', purchaseRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

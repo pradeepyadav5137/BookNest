@@ -40,6 +40,16 @@ const bookSchema = new mongoose.Schema(
     },
     coverImage: String,
     pdfFile: String, // Store path to PDF
+    isCopyrighted: {
+      type: Boolean,
+      default: false,
+    },
+    copyrightProof: String, // Path to document
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending',
+    },
     isbn: String,
     pages: Number,
     rating: {

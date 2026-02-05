@@ -2,6 +2,7 @@ import express from 'express';
 import Book from '../models/Book.js';
 import { verifyToken, optionalAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -16,10 +17,13 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     if (search) {
+      const searchTerms = search.split(' ').filter(term => term.length > 0);
+      const searchRegex = searchTerms.map(term => new RegExp(term, 'i'));
+
       filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { author: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+        { title: { $in: searchRegex } },
+        { author: { $in: searchRegex } },
+        { description: { $in: searchRegex } },
       ];
     }
 
@@ -50,9 +54,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
 });
 
 // Create book (upload)
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, upload.fields([
+  { name: 'pdfFile', maxCount: 1 },
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'copyrightProof', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { title, author, description, price, category, isbn, pages, coverImage, pdfFile } = req.body;
+    const { title, author, description, price, category, isbn, pages, isCopyrighted } = req.body;
 
     // Validation
     if (!title || !author || !description || !price || !category) {
@@ -62,6 +70,10 @@ router.post('/', verifyToken, async (req, res) => {
     if (price < 0) {
       throw new AppError('Price must be positive', 400);
     }
+
+    const pdfFile = req.files['pdfFile'] ? `/uploads/books/${req.files['pdfFile'][0].filename}` : null;
+    const coverImage = req.files['coverImage'] ? `/uploads/covers/${req.files['coverImage'][0].filename}` : null;
+    const copyrightProof = req.files['copyrightProof'] ? `/uploads/proofs/${req.files['copyrightProof'][0].filename}` : null;
 
     const book = await Book.create({
       title,
@@ -73,6 +85,9 @@ router.post('/', verifyToken, async (req, res) => {
       pages,
       coverImage,
       pdfFile,
+      isCopyrighted: isCopyrighted === 'true' || isCopyrighted === true,
+      copyrightProof,
+      verificationStatus: isCopyrighted === 'true' || isCopyrighted === true ? 'pending' : 'verified', // If not copyrighted, maybe it doesn't need verification? Or all need?
       seller: req.userId,
     });
 
@@ -152,10 +167,14 @@ router.get('/search/query', optionalAuth, async (req, res) => {
       return res.json([]);
     }
 
+    const searchTerms = q.split(' ').filter(term => term.length > 0);
+    const searchRegex = searchTerms.map(term => new RegExp(term, 'i'));
+
     const books = await Book.find({
       $or: [
-        { title: { $regex: q, $options: 'i' } },
-        { author: { $regex: q, $options: 'i' } },
+        { title: { $in: searchRegex } },
+        { author: { $in: searchRegex } },
+        { description: { $in: searchRegex } },
       ],
       isAvailable: true,
     })

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -13,6 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import SellPage from './pages/SellPage';
 import SearchPage from './pages/SearchPage';
 import SellerProfilePage from './pages/SellerProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 
@@ -42,6 +44,14 @@ function App() {
                 }
               />
               <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/sell"
                 element={
                   <ProtectedRoute>
@@ -52,6 +62,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <Footer />
         </AuthProvider>
       </Router>
     </ThemeProvider>

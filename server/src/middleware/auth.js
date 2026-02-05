@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler.js';
+import User from '../models/User.js';
 
 export const verifyToken = (req, res, next) => {
   try {
@@ -30,4 +31,16 @@ export const optionalAuth = (req, res, next) => {
     // Continue without auth
   }
   next();
+};
+
+export const isAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'admin') {
+      throw new AppError('Admin access required', 403);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 };

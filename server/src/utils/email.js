@@ -1,4 +1,10 @@
 import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create email transporter
 const createTransporter = () => {
@@ -53,8 +59,7 @@ export const sendPdfEmail = async (purchase) => {
       attachments: purchase.book.pdfFile ? [
         {
           filename: `${purchase.book.title.replace(/[^a-z0-9]/gi, '_')}.pdf`,
-          content: purchase.book.pdfFile.split(',')[1], // Remove data:application/pdf;base64, prefix
-          encoding: 'base64',
+          path: path.join(__dirname, '../../', purchase.book.pdfFile),
         },
       ] : [],
     };
