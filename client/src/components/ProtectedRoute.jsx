@@ -20,6 +20,7 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
   }
 
   if (adminOnly && user?.role !== 'admin') {
+    alert('Access Denied: You need to be an admin for this action.');
     return <Navigate to="/" replace />;
   }
 
