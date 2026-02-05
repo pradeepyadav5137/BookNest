@@ -1,5 +1,6 @@
 import express from 'express';
 import Book from '../models/Book.js';
+import Purchase from '../models/Purchase.js';
 import { verifyToken, optionalAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { upload } from '../middleware/upload.js';
@@ -182,6 +183,67 @@ router.get('/search/query', optionalAuth, async (req, res) => {
       .limit(20);
 
     res.json(books);
+  } catch (error) {
+    throw error;
+  }
+});
+
+// Add a review to a book
+router.post('/:id/reviews', verifyToken, async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const bookId = req.params.id;
+
+    if (!rating || rating < 1 || rating > 5) {
+      throw new AppError('Please provide a rating between 1 and 5', 400);
+    }
+
+    const book = await Book.findById(bookId);
+    if (!book) {
+      throw new AppError('Book not found', 404);
+    }
+
+    // Check if user has purchased the book
+    const hasPurchased = await Purchase.findOne({
+      buyer: req.userId,
+      book: bookId,
+      status: 'completed',
+    });
+
+    if (!hasPurchased && book.seller.toString() !== req.userId) {
+      throw new AppError('You must purchase the book before reviewing it', 403);
+    }
+
+    // Check if user already reviewed
+    const existingReview = book.reviews.find(
+      (r) => r.userId.toString() === req.userId
+    );
+
+    if (existingReview) {
+      // Update existing review
+      existingReview.rating = rating;
+      existingReview.comment = comment;
+      existingReview.createdAt = Date.now();
+    } else {
+      // Add new review
+      book.reviews.push({
+        userId: req.userId,
+        rating,
+        comment,
+      });
+    }
+
+    // Calculate average rating
+    const totalRating = book.reviews.reduce((acc, r) => acc + r.rating, 0);
+    book.rating = totalRating / book.reviews.length;
+
+    await book.save();
+
+    res.status(201).json({
+      message: 'Review added successfully',
+      rating: book.rating,
+      reviews: book.reviews,
+    });
   } catch (error) {
     throw error;
   }
